@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/mattermost/mattermost/server/public/plugin"
+	"github.com/opentracing/opentracing-go/log"
 )
 
 type Plugin struct {
@@ -26,8 +27,16 @@ func (p *Plugin) ServeHTTP(_ *plugin.Context, w http.ResponseWriter, _ *http.Req
 		return
 	}
 
-	conn.Write([]byte("HTTP/1.1 200\n\nOK"))
-	conn.Close()
+	_, writeErr := conn.Write([]byte("HTTP/1.1 200\n\nOK"))
+	if writeErr != nil {
+		log.Error(writeErr)
+		return
+	}
+	closeErr := conn.Close()
+	if closeErr != nil {
+		log.Error(closeErr)
+		return
+	}
 }
 
 func main() {
